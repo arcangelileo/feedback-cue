@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}{{ board.name }} — FeedbackCue{% endblock %}
+
+{% block head %}
+<style>
+    .accent-bg { background-color: {{ board.accent_color }}; }
+    .accent-bg-light { background-color: {{ board.accent_color }}15; }
+    .accent-text { color: {{ board.accent_color }}; }
+    .accent-border { border-color: {{ board.accent_color }}; }
+    .vote-btn:hover { background-color: {{ board.accent_color }}15; border-color: {{ board.accent_color }}; }
+    .vote-btn.voted { background-color: {{ board.accent_color }}15; border-color: {{ board.accent_color }}; }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Board Header -->
+<div class="accent-bg py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-white">{{ board.name }}</h1>
+                {% if board.description %}
+                <p class="mt-1 text-white/80">{{ board.description }}</p>
+                {% endif %}
+            </div>
+            <a href="/" class="text-white/60 hover:text-white text-sm transition-colors">Powered by FeedbackCue</a>
+        </div>
+    </div>
+</div>
+
+<main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Submit Feedback -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Submit Feedback</h2>
+        <form method="POST" action="/b/{{ board.slug }}/submit" class="space-y-4">
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                    <input type="text" name="author_name" placeholder="Your name (optional)"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all">
+                </div>
+                <div>
+                    <input type="email" name="author_email" placeholder="Email (optional, for follow-ups)"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all">
+                </div>
+            </div>
+            <div>
+                <input type="text" name="title" required placeholder="Title — What's your idea or issue?"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all">
+            </div>
+            <div>
+                <textarea name="description" rows="3" placeholder="Add more details (optional)..."
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none"></textarea>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+                <select name="category"
+                    class="px-3 py-2.5 text-sm border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    <option value="feature">Feature Request</option>
+                    <option value="bug">Bug Report</option>
+                    <option value="improvement">Improvement</option>
+                    <option value="question">Question</option>
+                </select>
+                <button type="submit"
+                    class="px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors shadow-sm accent-bg hover:opacity-90">
+                    Submit
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+        <form method="GET" class="flex flex-wrap items-center gap-3">
+            <select name="status_filter" class="px-3 py-2 text-sm border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                <option value="">All Statuses</option>
+                {% for s in statuses %}
+                <option value="{{ s.value }}" {% if status_filter == s.value %}selected{% endif %}>{{ s.value.replace('_', ' ').title() }}</option>
+                {% endfor %}
+            </select>
+            <select name="category_filter" class="px-3 py-2 text-sm border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                <option value="{{ c.value }}" {% if category_filter == c.value %}selected{% endif %}>{{ c.value.title() }}</option>
+                {% endfor %}
+            </select>
+            <select name="sort" class="px-3 py-2 text-sm border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                <option value="votes" {% if sort == 'votes' %}selected{% endif %}>Most Votes</option>
+                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest</option>
+            </select>
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors accent-bg hover:opacity-90">Filter</button>
+        </form>
+    </div>
+
+    <!-- Feedback Items -->
+    {% if items %}
+    <div class="space-y-3">
+        {% for item in items %}
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
+            <div class="flex items-start gap-4">
+                <form method="POST" action="/b/{{ board.slug }}/vote/{{ item.id }}" class="flex-shrink-0">
+                    <button type="submit" class="vote-btn w-14 h-16 rounded-xl border-2 border-gray-200 flex flex-col items-center justify-center gap-0.5 transition-all {% if item.id in voted_items %}voted accent-border{% endif %}">
+                        <svg class="w-4 h-4 {% if item.id in voted_items %}accent-text{% else %}text-gray-400{% endif %}" fill="{% if item.id in voted_items %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                        <span class="text-sm font-bold {% if item.id in voted_items %}accent-text{% else %}text-gray-600{% endif %}">{{ item.vote_count }}</span>
+                    </button>
+                </form>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-semibold text-gray-900">{{ item.title }}</h3>
+                    {% if item.description %}
+                    <p class="mt-1 text-sm text-gray-500 line-clamp-3">{{ item.description }}</p>
+                    {% endif %}
+                    <div class="flex flex-wrap items-center gap-2 mt-3">
+                        {% set cat_colors = {'bug': 'bg-red-100 text-red-700', 'feature': 'bg-blue-100 text-blue-700', 'improvement': 'bg-amber-100 text-amber-700', 'question': 'bg-purple-100 text-purple-700'} %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ cat_colors.get(item.category.value, 'bg-gray-100 text-gray-700') }}">
+                            {{ item.category.value.title() }}
+                        </span>
+                        {% set status_styles = {'open': 'bg-green-100 text-green-700', 'under_review': 'bg-yellow-100 text-yellow-700', 'planned': 'bg-blue-100 text-blue-700', 'in_progress': 'bg-orange-100 text-orange-700', 'shipped': 'bg-emerald-100 text-emerald-700', 'closed': 'bg-gray-100 text-gray-700'} %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ status_styles.get(item.status.value, 'bg-gray-100 text-gray-700') }}">
+                            {{ item.status.value.replace('_', ' ').title() }}
+                        </span>
+                        <span class="text-xs text-gray-400">{{ item.author_name or 'Anonymous' }}</span>
+                        <span class="text-xs text-gray-400">{{ item.created_at.strftime('%b %d') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16 bg-white rounded-2xl border border-gray-200">
+        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+        </div>
+        <h3 class="text-base font-semibold text-gray-900">No feedback yet</h3>
+        <p class="mt-1 text-sm text-gray-500">Be the first to submit an idea!</p>
+    </div>
+    {% endif %}
+</main>
+
+<!-- Footer -->
+<footer class="border-t border-gray-200 py-6 mt-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <a href="/" class="text-sm text-gray-400 hover:text-gray-600 transition-colors">Powered by FeedbackCue</a>
+    </div>
+</footer>
+{% endblock %}
