@@ -34,8 +34,9 @@ async def dashboard(
 ):
     boards = await get_boards_by_owner(db, user.id)
     return templates.TemplateResponse(
+        request,
         "dashboard/boards.html",
-        {"request": request, "user": user, "boards": boards},
+        {"user": user, "boards": boards},
     )
 
 
@@ -53,8 +54,9 @@ async def create_board_form(
     if not name:
         boards = await get_boards_by_owner(db, user.id)
         return templates.TemplateResponse(
+            request,
             "dashboard/boards.html",
-            {"request": request, "user": user, "boards": boards, "errors": ["Board name is required"]},
+            {"user": user, "boards": boards, "errors": ["Board name is required"]},
             status_code=422,
         )
 
@@ -81,9 +83,9 @@ async def board_detail(
     items = await get_feedback_for_board(db, board.id, status=status_enum, category=category_enum, sort_by=sort)
 
     return templates.TemplateResponse(
+        request,
         "dashboard/board_detail.html",
         {
-            "request": request,
             "user": user,
             "board": board,
             "items": items,
@@ -108,8 +110,9 @@ async def board_settings_page(
         raise HTTPException(status_code=404, detail="Board not found")
 
     return templates.TemplateResponse(
+        request,
         "dashboard/board_settings.html",
-        {"request": request, "user": user, "board": board},
+        {"user": user, "board": board},
     )
 
 
@@ -132,8 +135,9 @@ async def update_board_settings(
 
     if not name:
         return templates.TemplateResponse(
+            request,
             "dashboard/board_settings.html",
-            {"request": request, "user": user, "board": board, "errors": ["Board name is required"]},
+            {"user": user, "board": board, "errors": ["Board name is required"]},
             status_code=422,
         )
 

@@ -1,6 +1,6 @@
 # FeedbackCue
 
-Phase: DEVELOPMENT
+Phase: QA
 
 ## Project Spec
 - **Repo**: https://github.com/arcangelileo/feedback-cue
@@ -49,7 +49,7 @@ Phase: DEVELOPMENT
 - [x] Add landing/marketing page and navigation
 - [x] Write comprehensive tests (auth, boards, feedback, voting)
 - [x] Write Dockerfile and docker-compose.yml
-- [ ] Write README with setup and deploy instructions
+- [x] Write README with setup and deploy instructions
 
 ## Progress Log
 ### Session 1 — IDEATION
@@ -71,13 +71,24 @@ Phase: DEVELOPMENT
 - **Tests**: 27 tests all passing — auth (12), boards (8), feedback (4), voting (3)
 - Created GitHub repo at https://github.com/arcangelileo/feedback-cue
 
+### Session 3 — QA & DOCUMENTATION
+- **Quality audit**: Reviewed entire codebase (all source files, templates, tests, config)
+- **Fixed Starlette DeprecationWarning**: Updated all TemplateResponse calls across auth.py, boards.py, feedback.py, main.py to use new signature `TemplateResponse(request, name, context)` — all 10 deprecation warnings eliminated
+- **Generated initial Alembic migration**: `alembic revision --autogenerate` created migration with all 4 tables (users, boards, feedback_items, votes) with proper indexes and constraints
+- **Fixed footer year**: Updated landing page copyright from 2025 to 2026
+- **Removed unused import**: Cleaned up `StaticFiles` import from main.py
+- **Wrote comprehensive README.md**: Quick start guide, Docker deployment instructions, environment variables reference, project structure, API endpoints, and usage guide
+- **All 27 tests passing** with zero warnings
+- **All backlog items complete** — Phase changed to QA
+
 ## Known Issues
-- Starlette DeprecationWarning on TemplateResponse signature (cosmetic, non-breaking)
+- None currently
 
 ## Files Structure
 ```
 feedback-cue/
 ├── CLAUDE.md
+├── README.md
 ├── pyproject.toml
 ├── .env.example
 ├── .gitignore
@@ -90,6 +101,7 @@ feedback-cue/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
+│       └── c8201dc28b46_initial_migration.py
 ├── src/
 │   └── app/
 │       ├── __init__.py

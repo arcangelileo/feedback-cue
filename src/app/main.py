@@ -3,7 +3,6 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
@@ -45,4 +44,4 @@ async def health_check():
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(request: Request):
-    return templates.TemplateResponse("landing.html", {"request": request, "settings": settings})
+    return templates.TemplateResponse(request, "landing.html", {"settings": settings})

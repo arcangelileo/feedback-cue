@@ -51,9 +51,9 @@ async def public_board(
             voted_items.add(item.id)
 
     return templates.TemplateResponse(
+        request,
         "public/board.html",
         {
-            "request": request,
             "board": board,
             "items": items,
             "user": user,

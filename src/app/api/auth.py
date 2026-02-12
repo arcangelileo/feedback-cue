@@ -27,7 +27,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 async def register_page(request: Request, user: User | None = Depends(get_optional_user)):
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("auth/register.html", {"request": request})
+    return templates.TemplateResponse(request, "auth/register.html")
 
 
 @router.post("/register")
@@ -58,8 +58,9 @@ async def register(
 
     if errors:
         return templates.TemplateResponse(
+            request,
             "auth/register.html",
-            {"request": request, "errors": errors, "email": email, "username": username},
+            {"errors": errors, "email": email, "username": username},
             status_code=422,
         )
 
@@ -74,7 +75,7 @@ async def register(
 async def login_page(request: Request, user: User | None = Depends(get_optional_user)):
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("auth/login.html", {"request": request})
+    return templates.TemplateResponse(request, "auth/login.html")
 
 
 @router.post("/login")
@@ -89,8 +90,9 @@ async def login(
     user = await authenticate_user(db, email, password)
     if not user:
         return templates.TemplateResponse(
+            request,
             "auth/login.html",
-            {"request": request, "errors": ["Invalid email or password"], "email": email},
+            {"errors": ["Invalid email or password"], "email": email},
             status_code=401,
         )
 
