@@ -1,8 +1,9 @@
 # FeedbackCue
 
-Phase: SCAFFOLDING
+Phase: DEVELOPMENT
 
 ## Project Spec
+- **Repo**: https://github.com/arcangelileo/feedback-cue
 - **Idea**: FeedbackCue is a customer feedback and feature request board for SaaS companies, product teams, and indie developers. Users create a branded feedback portal where their customers can submit feature requests, report bugs, and vote on ideas. The product owner can organize feedback into categories, update statuses (planned, in progress, shipped), and see what matters most — all without spreadsheets or cluttered email threads. Think a streamlined, self-hostable alternative to Canny or UserVoice.
 - **Target users**: SaaS founders, product managers, indie hackers, and small development teams who need to collect and prioritize customer feedback without enterprise pricing. Secondary: agencies managing feedback for multiple client projects.
 - **Revenue model**: Freemium SaaS. Free tier: 1 board, 50 feedback items. Paid tier ($12/mo): unlimited boards, unlimited items, custom branding, CSV export, email notifications. Future: team seats, API access, webhooks, integrations.
@@ -33,21 +34,21 @@ Phase: SCAFFOLDING
 - **Docker**: Multi-stage build, non-root user, docker-compose with volume for SQLite persistence
 
 ## Task Backlog
-- [ ] Create GitHub repo and initial project structure (pyproject.toml, src layout, .env.example)
-- [ ] Set up FastAPI app skeleton with health check, config, and database engine
-- [ ] Create SQLAlchemy models: User, Board, FeedbackItem, Vote
-- [ ] Set up Alembic and generate initial migration
-- [ ] Implement user registration and login API + pages (JWT auth)
-- [ ] Implement board CRUD — create, update, delete boards with unique slugs
-- [ ] Build owner dashboard page — list boards, view feedback per board, filter/sort
-- [ ] Build public board page — view feedback, submit new items, vote on items
-- [ ] Implement voting system with duplicate-vote prevention
-- [ ] Implement feedback status management (owner can update status labels)
-- [ ] Add category tagging and filtering
-- [ ] Build board settings page (title, description, accent color)
-- [ ] Add landing/marketing page and navigation
-- [ ] Write comprehensive tests (auth, boards, feedback, voting)
-- [ ] Write Dockerfile and docker-compose.yml
+- [x] Create GitHub repo and initial project structure (pyproject.toml, src layout, .env.example)
+- [x] Set up FastAPI app skeleton with health check, config, and database engine
+- [x] Create SQLAlchemy models: User, Board, FeedbackItem, Vote
+- [x] Set up Alembic and generate initial migration
+- [x] Implement user registration and login API + pages (JWT auth)
+- [x] Implement board CRUD — create, update, delete boards with unique slugs
+- [x] Build owner dashboard page — list boards, view feedback per board, filter/sort
+- [x] Build public board page — view feedback, submit new items, vote on items
+- [x] Implement voting system with duplicate-vote prevention
+- [x] Implement feedback status management (owner can update status labels)
+- [x] Add category tagging and filtering
+- [x] Build board settings page (title, description, accent color)
+- [x] Add landing/marketing page and navigation
+- [x] Write comprehensive tests (auth, boards, feedback, voting)
+- [x] Write Dockerfile and docker-compose.yml
 - [ ] Write README with setup and deploy instructions
 
 ## Progress Log
@@ -56,8 +57,22 @@ Phase: SCAFFOLDING
 - Created spec and backlog
 - Rationale: Strong B2B demand (every SaaS needs feedback collection), clear freemium model, sticky product, well-scoped MVP, differentiated from existing factory projects (InvoicePulse=billing, StatusPing=monitoring)
 
+### Session 2 — SCAFFOLDING
+- Created full project structure with all files from the architecture spec
+- **FastAPI app**: main.py with lifespan, health check endpoint, landing page route
+- **Config**: Pydantic Settings with .env support (database URL, JWT config, server settings)
+- **Database**: Async SQLAlchemy 2.0 engine + session factory, DeclarativeBase
+- **Models**: User, Board, FeedbackItem (with status/category enums), Vote (with unique constraint)
+- **Services**: Auth (JWT+bcrypt, register/login/token), Board (CRUD, unique slug generation), Feedback (CRUD, vote toggle with dedup)
+- **API routes**: Auth (form + JSON endpoints), Boards (dashboard CRUD, status updates), Feedback (public board, submit, vote)
+- **Templates**: 8 Jinja2 templates with Tailwind CSS — landing page with hero/features/pricing, auth forms, dashboard (board list, detail with filters, settings), public board page with voting UI
+- **Alembic**: Configured for async SQLite migrations
+- **Docker**: Multi-stage Dockerfile (non-root user), docker-compose with volume
+- **Tests**: 27 tests all passing — auth (12), boards (8), feedback (4), voting (3)
+- Created GitHub repo at https://github.com/arcangelileo/feedback-cue
+
 ## Known Issues
-(none yet)
+- Starlette DeprecationWarning on TemplateResponse signature (cosmetic, non-breaking)
 
 ## Files Structure
 ```
@@ -70,9 +85,10 @@ feedback-cue/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── docker-entrypoint.sh
+├── alembic.ini
 ├── alembic/
-│   ├── alembic.ini
 │   ├── env.py
+│   ├── script.py.mako
 │   └── versions/
 ├── src/
 │   └── app/
@@ -84,8 +100,8 @@ feedback-cue/
 │       │   ├── __init__.py
 │       │   ├── auth.py
 │       │   ├── boards.py
-│       │   ├── feedback.py
-│       │   └── deps.py
+│       │   ├── deps.py
+│       │   └── feedback.py
 │       ├── models/
 │       │   ├── __init__.py
 │       │   ├── user.py
