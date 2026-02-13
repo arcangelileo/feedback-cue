@@ -7,68 +7,86 @@
     .accent-bg-light { background-color: {{ board.accent_color }}15; }
     .accent-text { color: {{ board.accent_color }}; }
     .accent-border { border-color: {{ board.accent_color }}; }
+    .accent-focus:focus { --tw-ring-color: {{ board.accent_color }}40; border-color: {{ board.accent_color }}; }
     .vote-btn:hover { background-color: {{ board.accent_color }}15; border-color: {{ board.accent_color }}; }
     .vote-btn.voted { background-color: {{ board.accent_color }}15; border-color: {{ board.accent_color }}; }
 </style>
 {% endblock %}
 
+{% block nav %}{% endblock %}
+
 {% block body %}
 <!-- Board Header -->
 <div class="accent-bg py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
                 <h1 class="text-2xl font-bold text-white">{{ board.name }}</h1>
                 {% if board.description %}
-                <p class="mt-1 text-white/80">{{ board.description }}</p>
+                <p class="mt-1 text-white/80 text-sm sm:text-base">{{ board.description }}</p>
                 {% endif %}
             </div>
-            <a href="/" class="text-white/60 hover:text-white text-sm transition-colors">Powered by FeedbackCue</a>
+            <a href="/" class="text-white/60 hover:text-white text-xs sm:text-sm transition-colors whitespace-nowrap flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                FeedbackCue
+            </a>
         </div>
     </div>
 </div>
 
 <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if submitted %}
+    <div id="success-banner" class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 fade-in">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        Thanks for your feedback! Your submission has been added.
+    </div>
+    <script>setTimeout(function(){ var el = document.getElementById('success-banner'); if(el) el.style.display='none'; }, 5000);</script>
+    {% endif %}
+
     <!-- Submit Feedback -->
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Submit Feedback</h2>
-        <form method="POST" action="/b/{{ board.slug }}/submit" class="space-y-4">
+        <button onclick="document.getElementById('feedback-form').classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')" class="flex items-center justify-between w-full text-left">
+            <h2 class="text-lg font-semibold text-gray-900">Submit Feedback</h2>
+            <svg class="w-5 h-5 text-gray-400 transition-transform {% if not items %}rotate-180{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <form id="feedback-form" method="POST" action="/b/{{ board.slug }}/submit" class="space-y-4 mt-4 {% if items %}hidden{% endif %}">
             <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                     <input type="text" name="author_name" placeholder="Your name (optional)"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all">
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm accent-focus focus:ring-2 outline-none transition-all">
                 </div>
                 <div>
                     <input type="email" name="author_email" placeholder="Email (optional, for follow-ups)"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all">
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm accent-focus focus:ring-2 outline-none transition-all">
                 </div>
             </div>
             <div>
-                <input type="text" name="title" required placeholder="Title — What's your idea or issue?"
-                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all">
+                <input type="text" name="title" required placeholder="What's your idea or issue?"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm accent-focus focus:ring-2 outline-none transition-all"
+                    maxlength="300">
             </div>
             <div>
                 <textarea name="description" rows="3" placeholder="Add more details (optional)..."
-                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none"></textarea>
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm accent-focus focus:ring-2 outline-none transition-all resize-none"></textarea>
             </div>
-            <div class="flex items-center justify-between gap-4">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <select name="category"
-                    class="px-3 py-2.5 text-sm border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    class="px-3 py-2.5 text-sm border border-gray-300 rounded-xl bg-white accent-focus focus:ring-2 outline-none">
                     <option value="feature">Feature Request</option>
                     <option value="bug">Bug Report</option>
                     <option value="improvement">Improvement</option>
                     <option value="question">Question</option>
                 </select>
                 <button type="submit"
-                    class="px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors shadow-sm accent-bg hover:opacity-90">
-                    Submit
+                    class="px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-all shadow-sm accent-bg hover:opacity-90 active:scale-[0.98]">
+                    Submit Feedback
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Filters -->
-    <div class="flex flex-wrap items-center gap-3 mb-6">
+    <!-- Filters & Count -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <form method="GET" class="flex flex-wrap items-center gap-3">
             <select name="status_filter" class="px-3 py-2 text-sm border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                 <option value="">All Statuses</option>
@@ -89,16 +107,17 @@
             </select>
             <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors accent-bg hover:opacity-90">Filter</button>
         </form>
+        <span class="text-sm text-gray-400">{{ items|length }} item{{ 's' if items|length != 1 else '' }}</span>
     </div>
 
     <!-- Feedback Items -->
     {% if items %}
     <div class="space-y-3">
         {% for item in items %}
-        <div class="bg-white rounded-2xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
-            <div class="flex items-start gap-4">
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 hover:border-gray-300 transition-colors">
+            <div class="flex items-start gap-3 sm:gap-4">
                 <form method="POST" action="/b/{{ board.slug }}/vote/{{ item.id }}" class="flex-shrink-0">
-                    <button type="submit" class="vote-btn w-14 h-16 rounded-xl border-2 border-gray-200 flex flex-col items-center justify-center gap-0.5 transition-all {% if item.id in voted_items %}voted accent-border{% endif %}">
+                    <button type="submit" class="vote-btn w-12 h-14 sm:w-14 sm:h-16 rounded-xl border-2 border-gray-200 flex flex-col items-center justify-center gap-0.5 transition-all {% if item.id in voted_items %}voted accent-border{% endif %}" title="{% if item.id in voted_items %}Remove vote{% else %}Upvote{% endif %}">
                         <svg class="w-4 h-4 {% if item.id in voted_items %}accent-text{% else %}text-gray-400{% endif %}" fill="{% if item.id in voted_items %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
                         <span class="text-sm font-bold {% if item.id in voted_items %}accent-text{% else %}text-gray-600{% endif %}">{{ item.vote_count }}</span>
                     </button>
@@ -127,11 +146,11 @@
     </div>
     {% else %}
     <div class="text-center py-16 bg-white rounded-2xl border border-gray-200">
-        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+        <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
         </div>
         <h3 class="text-base font-semibold text-gray-900">No feedback yet</h3>
-        <p class="mt-1 text-sm text-gray-500">Be the first to submit an idea!</p>
+        <p class="mt-2 text-sm text-gray-500 max-w-sm mx-auto">Be the first to share your thoughts! Use the form above to submit an idea or report an issue.</p>
     </div>
     {% endif %}
 </main>
@@ -139,7 +158,10 @@
 <!-- Footer -->
 <footer class="border-t border-gray-200 py-6 mt-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <a href="/" class="text-sm text-gray-400 hover:text-gray-600 transition-colors">Powered by FeedbackCue</a>
+        <a href="/" class="text-sm text-gray-400 hover:text-gray-600 transition-colors inline-flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+            Powered by FeedbackCue
+        </a>
     </div>
 </footer>
 {% endblock %}

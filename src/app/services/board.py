@@ -3,6 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.board import Board
+from app.models.feedback import FeedbackItem
 
 
 async def generate_unique_slug(db: AsyncSession, name: str, exclude_id: str | None = None) -> str:
@@ -53,8 +54,10 @@ async def get_board_by_id(db: AsyncSession, board_id: str) -> Board | None:
 
 async def update_board(db: AsyncSession, board: Board, **kwargs) -> Board:
     if "slug" in kwargs and kwargs["slug"]:
-        slug = await generate_unique_slug(db, kwargs["slug"], exclude_id=board.id)
+        raw_slug = kwargs.pop("slug")
+        slug = await generate_unique_slug(db, raw_slug, exclude_id=board.id)
         board.slug = slug
+    elif "slug" in kwargs:
         del kwargs["slug"]
     for key, value in kwargs.items():
         if value is not None:
@@ -66,3 +69,15 @@ async def update_board(db: AsyncSession, board: Board, **kwargs) -> Board:
 async def delete_board(db: AsyncSession, board: Board) -> None:
     await db.delete(board)
     await db.flush()
+
+
+async def get_board_stats(db: AsyncSession, board_id: str) -> dict:
+    """Get feedback count and total votes for a board."""
+    result = await db.execute(
+        select(
+            func.count(FeedbackItem.id),
+            func.coalesce(func.sum(FeedbackItem.vote_count), 0),
+        ).where(FeedbackItem.board_id == board_id)
+    )
+    row = result.one()
+    return {"item_count": row[0], "total_votes": row[1]}

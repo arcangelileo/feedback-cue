@@ -1,6 +1,4 @@
-import uuid
-
-from fastapi import Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -35,12 +33,3 @@ async def get_optional_user(
     if not user_id:
         return None
     return await get_user_by_id(db, user_id)
-
-
-def get_voter_id(request: Request, response: Response) -> str:
-    """Get or create a voter ID from session cookie."""
-    voter_id = request.cookies.get("voter_id")
-    if not voter_id:
-        voter_id = str(uuid.uuid4())
-        response.set_cookie("voter_id", voter_id, max_age=60 * 60 * 24 * 365, httponly=True)
-    return voter_id

@@ -1,7 +1,7 @@
-import pytest
-from httpx import ASGITransport, AsyncClient
+import re
 
-from app.main import app
+import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
@@ -78,3 +78,62 @@ async def test_duplicate_vote_prevention(client: AsyncClient, authenticated_clie
 
     refreshed = await get_feedback_by_id(db_session, item.id)
     assert refreshed.vote_count == 2
+
+
+@pytest.mark.asyncio
+async def test_vote_http_endpoint(client: AsyncClient, authenticated_client: AsyncClient):
+    """Test voting via the HTTP form endpoint."""
+    create_resp = await authenticated_client.post("/api/boards", json={"name": "HTTP Vote Board"})
+    slug = create_resp.json()["slug"]
+
+    # Submit feedback
+    await client.post(
+        f"/b/{slug}/submit",
+        data={"title": "Vote via HTTP", "category": "feature"},
+        follow_redirects=False,
+    )
+
+    # Get item ID from public board page
+    board_resp = await client.get(f"/b/{slug}")
+    match = re.search(r'/vote/([a-f0-9\-]+)', board_resp.text)
+    assert match, "Could not find vote URL in page"
+    item_id = match.group(1)
+
+    # Vote
+    response = await client.post(
+        f"/b/{slug}/vote/{item_id}",
+        data={},
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+
+    # Verify vote count increased
+    board_resp = await client.get(f"/b/{slug}")
+    # The vote count should now be 1 (shown in the vote button)
+    assert board_resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_vote_nonexistent_board(client: AsyncClient):
+    response = await client.post(
+        "/b/nonexistent/vote/some-item-id",
+        data={},
+        follow_redirects=False,
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_toggle_vote_nonexistent_item(db_session):
+    from app.services.feedback import toggle_vote
+
+    result = await toggle_vote(db_session, "nonexistent-id", "voter-1")
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_has_voted_returns_false_for_no_vote(db_session):
+    from app.services.feedback import has_voted
+
+    result = await has_voted(db_session, "nonexistent-id", "voter-1")
+    assert result is False

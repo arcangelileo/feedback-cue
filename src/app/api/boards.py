@@ -16,6 +16,7 @@ from app.services.board import (
     get_board_by_id,
     update_board,
     delete_board,
+    get_board_stats,
 )
 from app.services.feedback import get_feedback_for_board
 from app.schemas.board import BoardCreate, BoardUpdate, BoardResponse
@@ -33,10 +34,13 @@ async def dashboard(
     db: AsyncSession = Depends(get_db),
 ):
     boards = await get_boards_by_owner(db, user.id)
+    board_stats = {}
+    for board in boards:
+        board_stats[board.id] = await get_board_stats(db, board.id)
     return templates.TemplateResponse(
         request,
         "dashboard/boards.html",
-        {"user": user, "boards": boards},
+        {"user": user, "boards": boards, "board_stats": board_stats},
     )
 
 
@@ -102,6 +106,7 @@ async def board_detail(
 async def board_settings_page(
     request: Request,
     board_id: str,
+    saved: bool = False,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -112,7 +117,7 @@ async def board_settings_page(
     return templates.TemplateResponse(
         request,
         "dashboard/board_settings.html",
-        {"user": user, "board": board},
+        {"user": user, "board": board, "saved": saved},
     )
 
 
@@ -142,7 +147,7 @@ async def update_board_settings(
         )
 
     await update_board(db, board, name=name, description=description, accent_color=accent_color, slug=slug)
-    return RedirectResponse(f"/dashboard/boards/{board.id}/settings", status_code=302)
+    return RedirectResponse(f"/dashboard/boards/{board.id}/settings?saved=true", status_code=302)
 
 
 @router.post("/dashboard/boards/{board_id}/delete")

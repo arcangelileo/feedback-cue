@@ -1,6 +1,6 @@
 # FeedbackCue
 
-Phase: QA
+Phase: DEPLOYMENT
 
 ## Project Spec
 - **Repo**: https://github.com/arcangelileo/feedback-cue
@@ -22,7 +22,7 @@ Phase: QA
 
 ## Architecture Decisions
 - **src layout**: `src/app/` with `api/`, `models/`, `schemas/`, `services/`, `templates/` subdirectories
-- **Auth**: JWT access tokens stored in httponly cookies, bcrypt password hashing via passlib
+- **Auth**: JWT access tokens stored in httponly cookies, bcrypt password hashing
 - **Database**: Async SQLAlchemy 2.0 + aiosqlite for SQLite; Alembic for migrations from day one
 - **Background jobs**: APScheduler integrated into FastAPI lifespan (for future email digests, vote tallies)
 - **Templates**: Jinja2 with Tailwind CSS via CDN, Inter font, consistent color palette (indigo primary)
@@ -50,6 +50,7 @@ Phase: QA
 - [x] Write comprehensive tests (auth, boards, feedback, voting)
 - [x] Write Dockerfile and docker-compose.yml
 - [x] Write README with setup and deploy instructions
+- [x] QA pass: bug fixes, UI polish, error pages, test coverage
 
 ## Progress Log
 ### Session 1 — IDEATION
@@ -80,6 +81,45 @@ Phase: QA
 - **Wrote comprehensive README.md**: Quick start guide, Docker deployment instructions, environment variables reference, project structure, API endpoints, and usage guide
 - **All 27 tests passing** with zero warnings
 - **All backlog items complete** — Phase changed to QA
+
+### Session 4 — QA POLISH & BUG FIXES
+- **Full codebase review**: Read all 20+ source files, all 10 templates, all test files
+- **Bugs found and fixed:**
+  1. **Unused `EmailStr` import** in `schemas/auth.py` — removed dead import
+  2. **Voter cookie bug**: `get_voter_id()` in deps.py set cookie on a `Response` object that was never sent back (the actual response was a `TemplateResponse`). Refactored voter ID management into `feedback.py` with `_get_or_create_voter_id()` that sets the cookie directly on the actual response object (TemplateResponse or RedirectResponse)
+  3. **Unused imports** in `api/deps.py`: Removed `uuid`, `Cookie`, `Response` imports and the now-unused `get_voter_id` function
+  4. **404 handler missed route-not-found**: Only handled `fastapi.HTTPException` but Starlette raises `starlette.exceptions.HTTPException` for unknown routes. Added dual handler for both exception types via shared `_handle_http_exception()` helper
+  5. **404 page showed no user nav**: Error handler hardcoded `user=None`. Updated to fetch actual user from session for proper nav display
+  6. **Board slug update bug**: `update_board` used `del kwargs["slug"]` before popping, missing the `elif` case for empty slug. Refactored to use `kwargs.pop()` properly
+- **Missing features added:**
+  1. **500 error page**: Created `errors/500.html` with professional styling and "Try Again" button
+  2. **500 exception handler**: Added server error handler in main.py
+  3. **Feedback submission success banner**: Added `?submitted=true` query param flow with green "Thanks for your feedback!" toast on public board
+  4. **Collapsible feedback form**: Form now starts collapsed when board has existing items (less noise), expanded when empty (encourage first submission)
+  5. **Favicon**: Added inline SVG favicon (indigo "F" on rounded square) to base.html
+  6. **Username display**: Nav bar shows username when logged in; dashboard greeting includes username; mobile menu shows "Signed in as [username]"
+  7. **Copy link button**: Added "Copy link" button next to public board URL in board detail header
+- **UI polish:**
+  - Consistent nav across all pages with proper user state
+  - Mobile menu shows signed-in user info
+  - Board detail header has copy-link functionality
+- **Test coverage expanded**: 48 → 63 tests (+15 new tests)
+  - `test_404_returns_json_for_api`: Verifies JSON 404 for API clients
+  - `test_404_returns_html_for_browser`: Verifies HTML 404 page for browsers
+  - `test_401_redirects_to_login_for_browser`: Verifies auth redirect for HTML
+  - `test_form_register_short_password`: Password validation on form register
+  - `test_form_register_duplicate_email`: Duplicate email validation on form
+  - `test_landing_page_shows_login_for_anonymous`: Landing page state for anon
+  - `test_landing_page_shows_dashboard_for_logged_in`: Landing page state for auth user
+  - `test_create_board_form_success`: Board creation via HTML form
+  - `test_board_slug_update_persists`: Slug update works end-to-end
+  - `test_dashboard_shows_username`: Username visible on dashboard
+  - `test_board_detail_empty_state`: Empty state shows slug and message
+  - `test_delete_nonexistent_board`: 404 for deleting missing board
+  - `test_submit_feedback_shows_success_banner`: Success toast after submission
+  - `test_public_board_sets_voter_cookie`: Voter cookie set on first visit
+  - `test_public_board_form_collapsed_with_items`: Form collapsed when items exist
+- **All 63 tests passing** — Phase changed to DEPLOYMENT
 
 ## Known Issues
 - None currently
@@ -140,6 +180,9 @@ feedback-cue/
 │           │   ├── boards.html
 │           │   ├── board_detail.html
 │           │   └── board_settings.html
+│           ├── errors/
+│           │   ├── 404.html
+│           │   └── 500.html
 │           └── public/
 │               └── board.html
 └── tests/
