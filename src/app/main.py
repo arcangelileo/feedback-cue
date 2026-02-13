@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -12,7 +13,12 @@ from app.config import get_settings
 from app.database import engine, Base, get_db, async_session
 from app.api import auth, boards, feedback
 from app.api.deps import get_optional_user
-from app.models.user import User
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -46,8 +52,8 @@ async def _handle_http_exception(request: Request, exc):
         try:
             async with async_session() as db:
                 user = await get_optional_user(request, db)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to fetch user for error handler: %s", e)
         return templates.TemplateResponse(
             request, "errors/404.html", {"user": user}, status_code=404
         )
@@ -69,10 +75,17 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(500)
 async def internal_server_error_handler(request: Request, exc: Exception):
+    logger.error("Internal server error on %s %s: %s", request.method, request.url, exc, exc_info=True)
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
+        user = None
+        try:
+            async with async_session() as db:
+                user = await get_optional_user(request, db)
+        except Exception:
+            pass
         return templates.TemplateResponse(
-            request, "errors/500.html", {"user": None}, status_code=500
+            request, "errors/500.html", {"user": user}, status_code=500
         )
     from fastapi.responses import JSONResponse
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})

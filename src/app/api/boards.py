@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,7 @@ from app.services.board import (
     get_board_stats,
 )
 from app.services.feedback import get_feedback_for_board
-from app.schemas.board import BoardCreate, BoardUpdate, BoardResponse
+from app.schemas.board import BoardCreate, BoardResponse
 
 router = APIRouter(tags=["boards"])
 

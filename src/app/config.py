@@ -1,5 +1,9 @@
+import logging
+
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -19,4 +23,10 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if settings.environment == "production" and settings.secret_key == "change-me-to-a-random-secret-key":
+        raise ValueError(
+            "SECRET_KEY must be changed from default in production! "
+            'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+        )
+    return settings

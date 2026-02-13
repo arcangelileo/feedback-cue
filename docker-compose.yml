@@ -2,14 +2,23 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "${PORT:-8000}:8000"
     environment:
-      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
-      - DATABASE_URL=sqlite+aiosqlite:///./data/feedbackcue.db
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env or environment}
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/feedbackcue.db
       - ENVIRONMENT=production
+      - APP_NAME=${APP_NAME:-FeedbackCue}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES:-1440}
     volumes:
       - app-data:/app/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
 volumes:
   app-data:
